@@ -65,8 +65,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macOS-latest]
-        arch: [x64, arm64]
+        # os: [windows-latest, ubuntu-latest, macOS-latest]
+        os: [macOS-latest]
+        arch: [x64]
+        include:
+          - os: macOS-latest
+            arch: arm64
       fail-fast: false    
     steps:
       - name: (Windows) Install dependencies
@@ -132,7 +136,7 @@ jobs:
       - name: (macOS arm64) Run CMake
         if: matrix.os == 'macOS-latest' && matrix.arch == 'arm64'
         working-directory: aseprite/build
-        run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DLAF_BACKEND=skia -DSKIA_DIR=../../skia -DSKIA_LIBRARY_DIR=$../../skia/out/Release-arm64 -DSKIA_LIBRARY=../../skia/out/Release-arm64/libskia.a -DPNG_ARM_NEON:STRING=on -G Ninja ..
+        run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DLAF_BACKEND=skia -DSKIA_DIR=../../skia -DSKIA_LIBRARY_DIR=../../skia/out/Release-arm64 -DSKIA_LIBRARY=../../skia/out/Release-arm64/libskia.a -DPNG_ARM_NEON:STRING=on -G Ninja ..
         
       - name: Run Ninja
         if: ((matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest') && matrix.arch == 'x64') || matrix.os == 'macOS-latest'
