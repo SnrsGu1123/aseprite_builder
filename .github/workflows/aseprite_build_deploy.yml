@@ -66,17 +66,14 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macOS-latest]
-        arch: [x64]
-      include:
-        - os: macOS-latest
-          arch: arm64
+        arch: [x64, arm64]
       fail-fast: false    
     steps:
       - name: (Windows) Install dependencies
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
         uses: seanmiddleditch/gha-setup-ninja@v3
       - name: (Ubuntu) Install dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         run: sudo apt-get install -y g++ clang libc++-dev libc++abi-dev cmake ninja-build libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev
       - name: (macOS) Install dependencies
         if: matrix.os == 'macOS-latest'
