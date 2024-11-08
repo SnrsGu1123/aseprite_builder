@@ -67,11 +67,10 @@ jobs:
       matrix:
         # os: [windows-latest, ubuntu-latest, macOS-latest]
         os: [macOS-latest]
-        # arch: [x64]
-        arch: [arm64]
-        # include:
-        #   - os: macOS-latest
-        #     arch: arm64
+        arch: [x64]
+        include:
+          - os: macOS-latest
+            arch: arm64
       fail-fast: false    
     steps:
       - name: (Windows) Install dependencies
@@ -137,6 +136,7 @@ jobs:
 
       - name: List Skia output directory (macOS arm64)
         if: matrix.os == 'macOS-latest' && matrix.arch == 'arm64'
+        working-directory: aseprite/build
         run: |
           echo "Checking Skia output directory:"
           ls -l ../../skia/out/Release-arm64/
