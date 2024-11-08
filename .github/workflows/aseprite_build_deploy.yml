@@ -133,10 +133,9 @@ jobs:
         working-directory: aseprite/build/bin
         run: echo '# This file is here so Aseprite behaves as a portable program' > aseprite.ini
       - name: Create release
-        working-directory: aseprite/build/bin
+        working-directory: aseprite/build
         run: |
-          mkdir Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}
-          mv !(Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}) ./Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}/
+          mv bin Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}
           7z a -tzip Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}.zip *
       - name: Upload release
         uses: actions/upload-release-asset@v1
@@ -144,6 +143,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.check-version.outputs.upload_url }}
-          asset_path: aseprite/build/bin/Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}.zip
+          asset_path: aseprite/build/Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}.zip
           asset_name: Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}.zip
           asset_content_type: application/zip
