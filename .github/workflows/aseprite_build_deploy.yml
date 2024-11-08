@@ -67,10 +67,11 @@ jobs:
       matrix:
         # os: [windows-latest, ubuntu-latest, macOS-latest]
         os: [macOS-latest]
-        arch: [x64]
-        include:
-          - os: macOS-latest
-            arch: arm64
+        # arch: [x64]
+        arch: [arm64]
+        # include:
+        #   - os: macOS-latest
+        #     arch: arm64
       fail-fast: false    
     steps:
       - name: (Windows) Install dependencies
@@ -87,9 +88,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: skia
-          key: skia-${{ matrix.os }}-cache
+          key: skia-${{ matrix.os }}-${{ matrix.arch }}-cache
       - name: Download Skia if not in cache (linux)
-        if: steps.skia-cache.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+        if: steps.skia-cache.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
         run: |
           curl -o Skia-${{ runner.os }}-Release-X64.zip -L https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-${{ runner.os }}-Release-x64-libstdc++.zip
           unzip Skia-${{ runner.os }}-Release-X64.zip -d skia
@@ -104,7 +105,7 @@ jobs:
           curl -o Skia-${{ runner.os }}-Release-arm64.zip -L https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-${{ runner.os }}-Release-arm64.zip
           unzip Skia-${{ runner.os }}-Release-arm64.zip -d skia
       - name: Download Skia if not in cache (Windows)
-        if: steps.skia-cache.outputs.cache-hit != 'true' && matrix.os == 'windows-latest' && matrix.arch == 'x64'
+        if: steps.skia-cache.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
           curl -o Skia-${{ runner.os }}-Release-X64.zip -L https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-${{ runner.os }}-Release-x64.zip
           unzip Skia-${{ runner.os }}-Release-X64.zip -d skia
@@ -114,32 +115,37 @@ jobs:
           unzip Aseprite-source.zip -d aseprite
           mkdir -p aseprite/build
       - name: (Windows) Set architecture for the produced binary
-        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+        if: matrix.os == 'windows-latest'
         shell: cmd
         run: call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
       - name: (Windows) Setting Visual Studio build environment variables and paths
-        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+        if: matrix.os == 'windows-latest'
         uses: seanmiddleditch/gha-setup-vsdevenv@v4
       - name: (Windows) Run CMake
-        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+        if: matrix.os == 'windows-latest'
         working-directory: aseprite/build
         shell: cmd
         run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DLAF_BACKEND=skia -DSKIA_DIR=..\..\skia -DSKIA_LIBRARY_DIR=..\..\skia\out\Release-x64 -DSKIA_LIBRARY=..\..\skia\out\Release-x64\skia.lib -DOPENSSL_ROOT_DIR=C:\OpenSSL -DOPENSSL_USE_STATIC_LIBS=TRUE -G Ninja ..
       - name: (Ubuntu) Run CMake
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+        if: matrix.os == 'ubuntu-latest'
         working-directory: aseprite/build
         run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DLAF_BACKEND=skia -DSKIA_DIR=../../skia -DSKIA_LIBRARY_DIR=../../skia/out/Release-x64 -G Ninja ..
       - name: (macOS x64) Run CMake
         if: matrix.os == 'macOS-latest' && matrix.arch == 'x64'
         working-directory: aseprite/build
         run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DLAF_BACKEND=skia -DSKIA_DIR=../../skia -DSKIA_LIBRARY_DIR=../../skia/out/Release-x64 -DSKIA_LIBRARY=../../skia/out/Release-x64/libskia.a -G Ninja ..
+
+      - name: List Skia output directory (macOS arm64)
+        if: matrix.os == 'macOS-latest' && matrix.arch == 'arm64'
+        run: |
+          echo "Checking Skia output directory:"
+          ls -l ../../skia/out/Release-arm64/
       - name: (macOS arm64) Run CMake
         if: matrix.os == 'macOS-latest' && matrix.arch == 'arm64'
         working-directory: aseprite/build
         run: cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DLAF_BACKEND=skia -DSKIA_DIR=../../skia -DSKIA_LIBRARY_DIR=../../skia/out/Release-arm64 -DSKIA_LIBRARY=../../skia/out/Release-arm64/libskia.a -DPNG_ARM_NEON:STRING=on -G Ninja ..
         
       - name: Run Ninja
-        if: ((matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest') && matrix.arch == 'x64') || matrix.os == 'macOS-latest'
         working-directory: aseprite/build
         run: ninja aseprite
       - name: Clean up build
@@ -150,7 +156,6 @@ jobs:
         working-directory: aseprite/build/bin
         run: echo '# This file is here so Aseprite behaves as a portable program' > aseprite.ini
       - name: Create release
-        if: ((matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest') && matrix.arch == 'x64') || matrix.os == 'macOS-latest'
         working-directory: aseprite/build
         run: |
           mv bin Aseprite-${{ needs.check-version.outputs.latest_tag }}-${{ runner.os }}-${{ matrix.arch }}
